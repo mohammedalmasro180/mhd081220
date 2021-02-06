@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:animate_do/animate_do.dart';
-import 'dart:async';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:ecm071220/constant/product_data.dart';
@@ -18,130 +16,139 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List data;
-  Future<String>  loadjsondata() async{
-    var jsondata= await rootBundle.loadString('assets/emprecord.json');
-    setState(() {
-      data=json.decode(jsondata);
-    });
-  }
+  Map map;
+  int i=1;
 
+  List users = [];
+  bool isLoading = false;
   @override
-  void initState(){
-    this.loadjsondata();
+
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    this.fetchUser();
+  }
+  fetchUser() async {
+    setState(() {
+      isLoading = true;
+    });
+    var url = "http://dev-ishtar.96.lt/ishtar-backend/public/paintings";
+    var response = await http.get(url);
+    // print(response.body);
+    if(response.statusCode == 200){
+      map = json.decode(response.body);
+
+
+      var data=map['Data'];
+      setState(() {
+        users = data;
+        isLoading = false;
+      });
+    }else{
+      users = [];
+      isLoading = false;
+    }
+
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: white,
       appBar: getAppBar(context),
-      body: getBody(),
-    );
-  }
-  
-  Widget getBody(){
-    return ListView(
-      children: <Widget>[
+      body: ListView(
+        children: <Widget>[
 
-        Padding(
-          padding: const EdgeInsets.only(top: 40,left: 30,right: 30,bottom: 20),
-          child: Row(
-           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text("Shoes",style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w600
-              ),),
-              Row(
-                children: <Widget>[
-                  Text("Sort by",style: TextStyle(
-                    fontSize: 15,
+          Padding(
+            padding: const EdgeInsets.only(top: 40,left: 30,right: 30,bottom: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text("Ashtar",style: TextStyle(
+                    fontSize: 30,
                     fontWeight: FontWeight.w600
-                  ),),
-                  SizedBox(width: 8,),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 5),
-                    child: Icon(Icons.keyboard_arrow_down),
-                  )
-                ],
-              )
-            ],
+                ),),
+
+              ],
+            ),
           ),
-        ),
-        Column(children: List.generate(products.length, (index){
-          return FadeInDown(
-            duration: Duration(milliseconds: 350 * index),
-                      child: Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: InkWell(
-              onTap:
-                  (){
-                Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailPage(
-                  id: products[index]['id'].toString(),
-                  name: products[index]['name'],
-                  img: products[index]['img'],
-                  price: products[index]['price'],
-                  mulImg: products[index]['mul_img'],
-                  sizes: products[index]['sizes'],
-                )));
-              ListView.builder(itemCount: data.length,
-    itemBuilder: (BuildContext context, int index) {
-                return Container(
-                    child: Stack(
-                      children: <Widget>[
-                        Container(
-                          decoration: BoxDecoration(
-                              color: grey,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [BoxShadow(
-                                  spreadRadius: 1,
-                                  color: black.withOpacity(0.1),
-                                  blurRadius: 2
-                              )]
-                          ),
-                          child: Column(
-                            children: <Widget>[
-                              Center(
-                                child: Container(
-                                  width: 280,
-                                  height: 180,
-                                  decoration: BoxDecoration(
-                                      image: DecorationImage(image: AssetImage("assets/images/"+products[index]['img']),fit: BoxFit.cover)
+          Column(children: List.generate(users.length, (index){
+            var text=users[index]['name'];
+            var img=users[index]['image'];
+            var id=users[index]['id'];
+            var price=users[index]['price'];
+
+            return FadeInDown(
+              duration: Duration(milliseconds: 350 * index),
+              child: Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: InkWell(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailPage(
+                      id: id,
+
+                    )));
+                  },
+                  child: Container(
+                      child: Stack(
+                        children: <Widget>[
+                          Container(
+                            width:400,
+                            decoration: BoxDecoration(
+                                color: grey,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [BoxShadow(
+                                    spreadRadius: 1,
+                                    color: black.withOpacity(0.1),
+                                    blurRadius: 2
+                                )]
+                            ),
+                            child: Column(
+                              children: <Widget>[
+                                Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(top: 20),
+                                    child: Container(
+
+                                      padding: EdgeInsets.all(60),
+
+                                      width: 280,
+                                      height: 180,
+                                      decoration: BoxDecoration(
+                                          image: DecorationImage(image: NetworkImage(img),fit: BoxFit.cover)
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(height: 15,),
-                              Text(products[index]['name'],style: TextStyle(
-                                  fontSize:17,
-                                  fontWeight: FontWeight.w600
-                              ),),
-                              SizedBox(height: 15,),
-                              Text("\$ "+products[index]['price'],style: TextStyle(
-                                  fontSize:16,
-                                  fontWeight: FontWeight.w500
-                              ),),
-                              SizedBox(height: 25,)
-                            ],
+                                SizedBox(height: 15,),
+                                Text(text.toString(),style: TextStyle(
+                                    fontSize:17,
+                                    fontWeight: FontWeight.w600
+                                ),),
+                                SizedBox(height: 15,),
+                                Text("\$ "+price.toString(),style: TextStyle(
+                                    fontSize:16,
+                                    fontWeight: FontWeight.w500
+                                ),),
 
+                                SizedBox(height: 25,)
+                              ],
+
+                            ),
                           ),
-                        ),
-                        Positioned(
-                            right: 10,
-                            child: IconButton(icon: SvgPicture.asset("assets/images/heart_icon.svg"), onPressed: null))
-                      ],
-                    )
-                );
-    }
-
-    );
-                },
-
-
-            ),
-        ),
-          );
-        }))
-      ],
+                          Positioned(
+                              right: 10,
+                              child: IconButton(icon: SvgPicture.asset("assets/images/heart_icon.svg"), onPressed: null))
+                        ],
+                      )
+                  ),
+                ),
+              ),
+            );
+          })
+          )
+        ],
+      ),
     );
   }
+
 }
